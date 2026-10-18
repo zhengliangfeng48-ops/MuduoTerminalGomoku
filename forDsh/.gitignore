@@ -1,0 +1,13 @@
+# 构建产物
+build/
+build-*/
+*.o
+*.a
+
+# 运行时产物
+logs/
+*.log
+core
+
+# 第三方工具编译产物（源码保留）
+tools/webbench/webbench
