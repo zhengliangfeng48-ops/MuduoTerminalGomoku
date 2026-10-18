@@ -1,0 +1,9 @@
+# 统一换行符：所有文本文件在仓库里存 LF。
+# 原因：这台机器 core.autocrlf=true，重新 clone 后脚本会变 CRLF，
+# 在 WSL 里执行 ./scripts/*.sh 会报 "bad interpreter: /bin/bash^M"。
+* text=auto eol=lf
+
+# 二进制文件不做换行转换
+*.png binary
+*.jpg binary
+*.a   binary
