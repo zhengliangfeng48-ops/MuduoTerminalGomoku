@@ -13,6 +13,6 @@ protected:
     ~noncopyable() = default;
 };
 
-}
+}   //namespace muduo
 
-#endif
+#endif  //MUDUO_BASE_NONCOPYABLE_H

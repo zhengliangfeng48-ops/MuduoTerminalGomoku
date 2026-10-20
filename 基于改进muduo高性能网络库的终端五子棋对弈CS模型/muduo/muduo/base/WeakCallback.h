@@ -46,4 +46,4 @@ WeakCallback<CLASS, ARGS...> makeWeakCallback(const std::shared_ptr<CLASS>& obje
 
 }   //namespace muduo
 
-#endif
+#endif  //MUDUO_BASE_WEAKCALLBACK_H
