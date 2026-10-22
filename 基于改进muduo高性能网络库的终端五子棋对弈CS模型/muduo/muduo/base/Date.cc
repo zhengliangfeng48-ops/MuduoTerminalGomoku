@@ -41,7 +41,7 @@ struct Date::YearMonthDay getYearMonthDay(int julianDayNumber){
 
 }   // namespace detail 
 
-const int Date::kJulianDayOf1970_01_01 = detail::getJulianDayNumber(1970,1,,);
+const int Date::kJulianDayOf1970_01_01 = detail::getJulianDayNumber(1970,1,1);
 
 }   // namespace muduo
 

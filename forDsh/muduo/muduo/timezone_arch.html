@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Muduo TimeZone 模块架构图</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #f8fafc; color: #1e293b; padding: 24px; line-height: 1.6; }
+  h1 { font-size: 22px; margin-bottom: 6px; color: #0f172a; }
+  .subtitle { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+
+  .layer { background: white; border-radius: 10px; padding: 18px 20px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-left: 4px solid; }
+  .layer-1 { border-color: #3b82f6; }
+  .layer-2 { border-color: #8b5cf6; }
+  .layer-3 { border-color: #10b981; }
+  .layer-4 { border-color: #f59e0b; }
+
+  .layer-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .layer-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; color: white; font-weight: 500; }
+  .badge-1 { background: #3b82f6; }
+  .badge-2 { background: #8b5cf6; }
+  .badge-3 { background: #10b981; }
+  .badge-4 { background: #f59e0b; }
+
+  .components { display: flex; gap: 12px; flex-wrap: wrap; }
+  .comp { background: #f1f5f9; border-radius: 6px; padding: 10px 14px; min-width: 140px; flex: 1; }
+  .comp-name { font-size: 13px; font-weight: 600; color: #0f172a; margin-bottom: 4px; }
+  .comp-desc { font-size: 12px; color: #475569; }
+  .comp.highlight { background: #ede9fe; border: 1px solid #c4b5fd; }
+
+  .arrow-row { text-align: center; color: #94a3b8; font-size: 18px; margin: 2px 0; }
+
+  .dataflow { margin-top: 20px; background: white; border-radius: 10px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .dataflow-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: #0f172a; }
+
+  .flow-diagram { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .flow-node { padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; text-align: center; min-width: 110px; }
+  .flow-input { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+  .flow-process { background: #f3e8ff; color: #6b21a8; border: 1px solid #c4b5fd; }
+  .flow-output { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+  .flow-arrow { color: #64748b; font-size: 20px; font-weight: bold; }
+  .flow-label { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+  .structure-box { margin-top: 20px; background: white; border-radius: 10px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .structure-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: #0f172a; }
+
+  .struct-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .struct-grid { grid-template-columns: 1fr; } }
+
+  .struct-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; }
+  .struct-name { font-size: 13px; font-weight: 700; color: #7c3aed; margin-bottom: 6px; font-family: "Consolas", monospace; }
+  .struct-field { font-size: 12px; color: #334155; padding: 2px 0; font-family: "Consolas", monospace; }
+  .struct-field .type { color: #64748b; }
+  .struct-note { font-size: 11px; color: #64748b; margin-top: 6px; font-style: italic; }
+
+  .key-points { margin-top: 20px; background: #fef3c7; border-radius: 10px; padding: 16px 20px; border: 1px solid #fcd34d; }
+  .key-points-title { font-size: 14px; font-weight: 700; color: #92400e; margin-bottom: 8px; }
+  .key-points ul { padding-left: 20px; font-size: 13px; color: #78350f; }
+  .key-points li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Muduo TimeZone 模块架构</h1>
+<div class="subtitle">基于 TimeZone.h / TimeZone.cc 源码分析 · PIMPL + IANA 时区文件解析</div>
+
+<!-- 第1层：对外接口 -->
+<div class="layer layer-1">
+  <div class="layer-title">
+    <span class="layer-badge badge-1">第 1 层</span>
+    对外接口层（用户直接使用）
+  </div>
+  <div class="components">
+    <div class="comp">
+      <div class="comp-name">DateTime</div>
+      <div class="comp-desc">年月日时分秒结构体<br>toIsoString() 输出 "2011-12-31 12:34:56"</div>
+    </div>
+    <div class="comp highlight">
+      <div class="comp-name">TimeZone 类（copyable）</div>
+      <div class="comp-desc">时区对象，支持拷贝<br>UTC() / China() / loadZoneFile()</div>
+    </div>
+    <div class="comp">
+      <div class="comp-name">toLocalTime()</div>
+      <div class="comp-desc">UTC时间戳 → 本地DateTime<br>可选返回 utcOffset</div>
+    </div>
+    <div class="comp">
+      <div class="comp-name">fromLocalTime()</div>
+      <div class="comp-desc">本地DateTime → UTC时间戳<br>postTransition 处理DST歧义</div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow-row">▼</div>
+
+<!-- 第2层：TimeZone 实现 -->
+<div class="layer layer-2">
+  <div class="layer-title">
+    <span class="layer-badge badge-2">第 2 层</span>
+    TimeZone 实现层（PIMPL 模式）
+  </div>
+  <div class="components">
+    <div class="comp">
+      <div class="comp-name">shared_ptr&lt;Data&gt; data_</div>
+      <div class="comp-desc">指向私有实现 Data<br>拷贝时共享，零开销</div>
+    </div>
+    <div class="comp highlight">
+      <div class="comp-name">Data::findLocalTime(utc)</div>
+      <div class="comp-desc">按 UTC 时间二分查找<br>确定该时刻用哪套偏移规则</div>
+    </div>
+    <div class="comp highlight">
+      <div class="comp-name">Data::findLocalTime(local, flag)</div>
+      <div class="comp-desc">按本地时间查找<br>处理 DST 跳变的歧义（skip/repeat）</div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow-row">▼</div>
+
+<!-- 第3层：内部数据结构 -->
+<div class="layer layer-3">
+  <div class="layer-title">
+    <span class="layer-badge badge-3">第 3 层</span>
+    核心数据结构（Data 内部）
+  </div>
+  <div class="components">
+    <div class="comp">
+      <div class="comp-name">vector&lt;Transition&gt; transitions</div>
+      <div class="comp-desc">时区切换点数组<br>按 UTC 时间排序，支持二分查找</div>
+    </div>
+    <div class="comp">
+      <div class="comp-name">vector&lt;LocalTime&gt; localtimes</div>
+      <div class="comp-desc">本地时间规则表<br>每条含 offset / isDst / 缩写</div>
+    </div>
+    <div class="comp">
+      <div class="comp-name">BreakTime() + Date</div>
+      <div class="comp-desc">时间戳 ↔ 年月日转换<br>基于 Julian Day Number，不依赖 libc tm</div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow-row">▼</div>
+
+<!-- 第4层：文件解析 -->
+<div class="layer layer-4">
+  <div class="layer-title">
+    <span class="layer-badge badge-4">第 4 层</span>
+    IANA 时区文件解析（detail 命名空间）
+  </div>
+  <div class="components">
+    <div class="comp">
+      <div class="comp-name">File 类（RAII）</div>
+      <div class="comp-desc">fopen/fclose 自动管理<br>readInt32/64 含大端转本机序</div>
+    </div>
+    <div class="comp">
+      <div class="comp-name">readTimeZoneFile()</div>
+      <div class="comp-desc">解析 TZif 二进制头<br>识别 v1 / v2 版本（RFC 8536）</div>
+    </div>
+    <div class="comp">
+      <div class="comp-name">readDataBlock()</div>
+      <div class="comp-desc">读取 timecnt 个切换点<br>读取 typecnt 个本地时间规则</div>
+    </div>
+  </div>
+</div>
+
+<!-- 数据流图 -->
+<div class="dataflow">
+  <div class="dataflow-title">🔄 时间转换数据流（以 toLocalTime 为例）</div>
+  <div class="flow-diagram">
+    <div>
+      <div class="flow-node flow-input">UTC 时间戳<br>(int64_t)</div>
+      <div class="flow-label">输入</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div>
+      <div class="flow-node flow-process">findLocalTime()<br>upper_bound 二分查找</div>
+      <div class="flow-label">在 transitions 数组中定位</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div>
+      <div class="flow-node flow-process">seconds + utcOffset<br>加上时区偏移</div>
+      <div class="flow-label">得到本地 epoch</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div>
+      <div class="flow-node flow-process">BreakTime()<br>拆分为年月日时分秒</div>
+      <div class="flow-label">Julian 日计算</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div>
+      <div class="flow-node flow-output">DateTime<br>(本地时间)</div>
+      <div class="flow-label">输出</div>
+    </div>
+  </div>
+</div>
+
+<!-- 核心数据结构 -->
+<div class="structure-box">
+  <div class="structure-title">📦 Data 内部核心数据结构关系</div>
+  <div class="struct-grid">
+    <div class="struct-card">
+      <div class="struct-name">struct Transition</div>
+      <div class="struct-field"><span class="type">int64_t</span> utctime &nbsp;&nbsp;// 切换点的 UTC 时刻</div>
+      <div class="struct-field"><span class="type">int64_t</span> localtime &nbsp;// 切换点的本地时刻</div>
+      <div class="struct-field"><span class="type">int</span> localtimeIdx &nbsp;// 指向 localtimes[] 索引</div>
+      <div class="struct-note">每个元素代表一次"从旧规则切换到新规则"的时间点</div>
+    </div>
+    <div class="struct-card">
+      <div class="struct-name">struct LocalTime</div>
+      <div class="struct-field"><span class="type">int32_t</span> utcOffset &nbsp;// 距 UTC 的偏移（秒）</div>
+      <div class="struct-field"><span class="type">bool</span> isDst &nbsp;&nbsp;&nbsp;&nbsp;// 是否夏令时</div>
+      <div class="struct-field"><span class="type">int</span> desigIdx &nbsp;&nbsp;&nbsp;// 时区缩写索引</div>
+      <div class="struct-note">每条代表一种"时间规则"（如 GMT+8、GMT+9 DST）</div>
+    </div>
+  </div>
+</div>
+
+<!-- 关键点 -->
+<div class="key-points">
+  <div class="key-points-title">💡 设计要点速览</div>
+  <ul>
+    <li><b>PIMPL 模式</b>：TimeZone 只持有 shared_ptr&lt;Data&gt;，实现细节全部藏在 .cc 里，头文件干净，编译依赖少</li>
+    <li><b>不依赖系统 libc 时区</b>：直接解析 IANA /usr/share/zoneinfo/ 下的 TZif 二进制文件，跨平台行为一致</li>
+    <li><b>二分查找</b>：transitions 数组按时间排序，upper_bound 定位，O(log n) 查找任意时刻的偏移规则</li>
+    <li><b>DST 歧义处理</b>：春季"跳空"（本地时间不存在）和秋季"重复"（本地时间出现两次）通过 postTransition 参数解决</li>
+    <li><b>自实现日期计算</b>：用 Julian Day Number 做 日期↔天数 转换，不依赖 struct tm，避免时区相关的全局状态</li>
+    <li><b>copyable 且高效</b>：Data 通过 shared_ptr 共享，拷贝 TimeZone 对象只是拷贝指针，零深拷贝开销</li>
+  </ul>
+</div>
+
+</body>
+</html>
