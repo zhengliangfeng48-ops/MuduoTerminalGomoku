@@ -18,6 +18,8 @@ using namespace muduo;
 
 struct TimeZone::Data{
 
+    // LocalTime 为时区字典，Transition 为转换时的时间、索引
+    // 当前 Transition 后的时区为 localtimes[localtimeIdx] 
     struct Transition{
         int64_t utctime;
         int64_t localtime;  // Shifted Epoch
@@ -62,8 +64,8 @@ struct TimeZone::Data{
 
     std::vector<Transition> transitions;
     std::vector<LocalTime> localtimes;
-    string abbreviation;
-    string tzstring;    //timezone string
+    string abbreviation;    // 时区名称缩写
+    string tzstring;        // timezone string
 };
 
 namespace muduo{
@@ -328,6 +330,138 @@ const TimeZone::Data::LocalTime* TimeZone::Data::findLocalTime(int64_t utcTime) 
 const TimeZone::Data::LocalTime* TimeZone::Data::findLocalTime(
     const struct DateTime& lt, bool postTransition) const {
 
-    //未完成 r n m !!!
+    const int64_t localtime = fromUtcTime(lt);
 
+    if (transitions.empty() || localtime < transitions.front().localtime){
+        // FIXME: should be first non dst time zone
+        return &localtimes.front();
+    }
+
+    Transition sentry(0, localtime, 0);
+    std::vector<Transition>::const_iterator transI =
+        std::upper_bound(transitions.begin(), transitions.end(), sentry, CompareLocalTime());
+    assert(transI != transitions.begin());
+
+    if (transI == transitions.end()){
+        // FIXME: use TZ-env
+        return &localtimes[transitions.back().localtimeIdx];
+    }
+
+    Transition prior_trans = *(transI - 1);
+    int64_t prior_second = transI->utctime - 1 + localtimes[prior_trans.localtimeIdx].utcOffset;
+
+    // row UTC time             isdst  offset  Local time (PRC)     Prior second local time
+    //  1  1989-09-16 17:00:00Z   0      8.0   1989-09-17 01:00:00
+    //  2  1990-04-14 18:00:00Z   1      9.0   1990-04-15 03:00:00  1990-04-15 01:59:59
+    //  3  1990-09-15 17:00:00Z   0      8.0   1990-09-16 01:00:00  1990-09-16 01:59:59
+    //  4  1991-04-13 18:00:00Z   1      9.0   1991-04-14 03:00:00  1991-04-14 01:59:59
+    //  5  1991-09-14 17:00:00Z   0      8.0   1991-09-15 01:00:00
+
+    // 以下为两种歧义情况
+
+    // input 1991-04-14 02:30:00, found row 4,
+    //  4  1991-04-13 18:00:00Z   1      9.0   1991-04-14 03:00:00  1991-04-14 01:59:59
+    if (prior_second < localtime){      // 说明 localtime 跳了1小时
+        // 夏令时春季 02:00:00 到 03:00:00 被跳过了
+        // it's a skip
+        // printf("SKIP: prev %ld local %ld start %ld\n", prior_second, localtime, transI->localtime);
+        if (postTransition){
+            return &localtimes[transI->localtimeIdx];
+        }else{
+            return &localtimes[prior_trans.localtimeIdx];
+        }
+    }
+
+    // input 1990-09-16 01:30:00, found row 4, looking at row 3
+    //  3  1990-09-15 17:00:00Z   0      8.0   1990-09-16 01:00:00  1990-09-16 01:59:59
+    --transI;
+    if (transI != transitions.begin()){
+        prior_trans = *(transI - 1);
+        prior_second = transI->utctime - 1 + localtimes[prior_trans.localtimeIdx].utcOffset;
+    }
+    if (localtime <= prior_second){     // 说明 localtime 回调了1小时
+        // 夏令时秋季 02:00:00 到 03:00:00 重复一次 
+        // it's repeat
+        // printf("REPEAT: prev %ld local %ld start %ld\n", prior_second, localtime, transI->localtime);
+        if (postTransition){
+            return &localtimes[transI->localtimeIdx];
+        }else{
+            return &localtimes[prior_trans.localtimeIdx];
+        }
+    }
+
+    // otherwise, it's unique
+    return &localtimes[transI->localtimeIdx];
+}
+
+// static
+TimeZone TimeZone::UTC(){
+    return TimeZone(0, "UTC");
+}
+
+// static
+TimeZone TimeZone::loadZoneFile(const char* zonefile){
+    std::unique_ptr<Data> data(new Data);
+    if (!detail::readTimeZoneFile(zonefile, data.get())){
+        data.reset();
+    }
+    return TimeZone(std::move(data));
+}
+
+TimeZone::TimeZone(std::unique_ptr<Data> data)
+    : data_(std::move(data)){}
+
+TimeZone::TimeZone(int eastOfUtc, const char* name)
+    : data_(new TimeZone::Data){
+    data_->addLocalTime(eastOfUtc, false, 0);
+    data_->abbreviation = name;
+}
+
+struct DateTime TimeZone::toLocalTime(int64_t seconds, int* utcOffset) const{
+    struct DateTime localTime;
+    assert(data_ != NULL);
+
+    const Data::LocalTime* local = data_->findLocalTime(seconds);
+
+    if (local){
+        localTime = detail::BreakTime(seconds + local->utcOffset);
+        if (utcOffset){
+            *utcOffset = local->utcOffset;
+        }
+    }
+
+    return localTime;
+}
+
+int64_t TimeZone::fromLocalTime(const struct DateTime& localtime, bool postTransition) const{
+    assert(data_ != NULL);
+    const Data::LocalTime* local = data_->findLocalTime(localtime, postTransition);
+    const int64_t localSeconds = fromUtcTime(localtime);
+    if (local){
+        return localSeconds - local->utcOffset;
+    }
+    // fallback as if it's UTC time.
+    return localSeconds;
+}
+
+DateTime TimeZone::toUtcTime(int64_t secondsSinceEpoch){
+    return detail::BreakTime(secondsSinceEpoch);
+}
+
+int64_t TimeZone::fromUtcTime(const DateTime& dt){
+    Date date(dt.year, dt.month, dt.day);
+    int secondsInDay = dt.hour * 3600 + dt.minute * 60 + dt.second;
+    int64_t days = date.julianDayNumber() - Date::kJulianDayOf1970_01_01;
+    return days * kSecondsPerDay + secondsInDay;
+}
+
+DateTime::DateTime(const struct tm& t)
+    : year(t.tm_year + 1900), month(t.tm_mon + 1), day(t.tm_mday),
+    hour(t.tm_hour), minute(t.tm_min), second(t.tm_sec){}
+
+string DateTime::toIsoString() const {
+    char buf[64];
+    snprintf(buf, sizeof buf, "%04d-%02d-%02d %02d:%02d:%02d",
+            year, month, day, hour, minute, second);
+    return buf;
 }
