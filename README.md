@@ -5,14 +5,13 @@ Reactor 网络库，客户端是同仓库的终端程序；账号与战绩（场
 附 **webbench** 压力测试与实测数据。
 
 仓库同时是一个 **muduo 学习工程**：`forDsh/` 是已完成并验证的参考实现（冻结，不改），
-[自研目录](基于改进muduo高性能网络库的终端五子棋对弈CS模型/README.md) 是照着它自己重写 muduo、
-再测性能、再做优化的工区。
+[`forMe/`](forMe/README.md) 是照着它自己重写 muduo、再测性能、再做优化的工区。
 
 ## 学习顺序
 
 **当前进度 12/82**
 
-> 路径相对 `forDsh/muduo/muduo/`；自研目录 `muduo/muduo/` 下的同名路径就是你要写的文件。
+> 路径相对 `forDsh/muduo/muduo/`；`forMe/muduo/muduo/` 下的同名路径就是你要写的文件。
 
 1. 批 1（1–4）：copyable.h、noncopyable.h、Types.h、WeakCallback.h
 2. 批 2（5–12）：StringPiece.h、Atomic.h、Timestamp.h、Timestamp.cc、Date.h、Date.cc、TimeZone.h、TimeZone.cc
@@ -29,14 +28,24 @@ Reactor 网络库，客户端是同仓库的终端程序；账号与战绩（场
 13. 批 13（69–74）：EventLoopThread.h、EventLoopThread.cc、EventLoopThreadPool.h、EventLoopThreadPool.cc、Acceptor.h、Acceptor.cc
 14. 批 14（75–82）：TcpConnection.h、TcpConnection.cc、TcpServer.h、TcpServer.cc、Connector.h、Connector.cc、TcpClient.h、TcpClient.cc
 
-每批写完跑一次 `cmake --build build`；14 批齐了再跑 `./scripts/progress.sh` 核对 82/82。
+**逐批验证**：`build` 是相对路径，必须在"配置过它的那个目录"里执行 —— 也就是 `forMe/muduo/`。
+批 1 配置一次，之后每批写完只编译这一个目录里的 muduo（只编 `muduo_base` / `muduo_net` 两个静态库）：
+
+```bash
+cd forMe/muduo
+cmake -S . -B build              # 只在批 1 配置一次（此后不用再 configure）
+cmake --build build -j$(nproc)   # 以后每批写完跑这一条
+```
+
+14 批齐了回 `forMe/`：`./scripts/progress.sh` 核对 82/82，再 `./scripts/build.sh` 编整个工程
+（含 `Gomoku/`，产物在 `forMe/build/`）。
 
 ## 两套实现
 
 | 部分 | 状态 |
 |---|---|
 | [`forDsh/`](forDsh/README.md) | ✅ 参考实现：单测 591 项、e2e 38 项、webbench 6 档 0 失败、2 万在线 |
-| [自研目录](基于改进muduo高性能网络库的终端五子棋对弈CS模型/README.md) | 🚧 muduo 手写 4/82；Gomoku、脚本、压测已复制 |
+| [forMe/](forMe/README.md) | 🚧 muduo 手写 12/82；Gomoku、脚本、压测已复制 |
 
 两套实现共用同一个 MySQL 库（`gomoku`），性能可直接对照。
 
@@ -44,7 +53,7 @@ Reactor 网络库，客户端是同仓库的终端程序；账号与战绩（场
 
 ```
 ├── forDsh/                 ① 参考实现（冻结）：muduo 副本 + Gomoku + 脚本 + 压测 + 结果
-├── 自研目录/                ② 手写 muduo 的工区：muduo 自己写，其余从 forDsh 复制
+├── forMe/                  ② 手写 muduo 的工区：muduo 自己写，其余从 forDsh 复制
 ├── AGENTS.md               规则 / 学习路线 / 性能口径 / 优化池（新会话必读）
 └── README.md               本文件
 ```
@@ -93,11 +102,11 @@ python3 Gomoku/tests/e2e_test.py    # 38 checks / 0 failures
 | [`forDsh/muduo/README.md`](forDsh/muduo/README.md) | muduo 副本的来源/包含/排除、构建差异、调用链速查 |
 | [`forDsh/Gomoku/README.md`](forDsh/Gomoku/README.md) | 组件职责、锁边界、房间状态机 |
 | [`forDsh/benchmarks/README.md`](forDsh/benchmarks/README.md) | 三套压测的方法、参数与解读 |
-| [自研目录/README.md](基于改进muduo高性能网络库的终端五子棋对弈CS模型/README.md) | 自研工程与 forDsh 的差异、build-ref 对照构建 |
-| [自研目录/benchmarks/RESULTS.md](基于改进muduo高性能网络库的终端五子棋对弈CS模型/benchmarks/RESULTS.md) | 优化前后对比台账 |
+| [forMe/README.md](forMe/README.md) | 自研工程与 forDsh 的差异、build-ref 对照构建 |
+| [forMe/benchmarks/RESULTS.md](forMe/benchmarks/RESULTS.md) | 优化前后对比台账 |
 
 ## 许可
 
-- `forDsh/muduo/` 与自研目录的 muduo：**BSD 3-Clause**（见各自目录 `License`），著作权归 Shuo Chen。
+- `forDsh/muduo/` 与 `forMe/muduo/`：**BSD 3-Clause**（见各自目录 `License`），著作权归 Shuo Chen。
 - `tools/webbench/`：**GPL v3**，原作者 Radim Kolar。
 - 本项目的 Gomoku、脚本与文档用于学习与演示。

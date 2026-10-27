@@ -22,9 +22,13 @@
 所以 configure 不会失败；Gomoku 在缺头文件时报错是**预期的进度提示**。
 
 ```bash
-cd muduo && cmake -S . -B build && cmake --build build -j$(nproc)   # 只编 muduo
-cd .. && ./scripts/build.sh                                         # 编整个工程
+cd muduo && cmake -S . -B build && cmake --build build -j$(nproc)   # 只编 muduo -> muduo/build/
+cd .. && ./scripts/build.sh                                         # 编整个工程 -> build/
 ```
+
+`muduo/build/`（只有两个静态库）与顶层 `build/`（整个工程）是两棵独立构建树，别混用二进制。
+`build` 是相对路径，`cmake --build build` 只认当前目录里配置过的那个构建树。
+单独 configure 时库在 `muduo/build/muduo/{base,net}/` 下；作为顶层子目录构建时统一到 `build/lib/`。
 
 编译参数与参考实现一致（见 `CMakeLists.txt` 顶部注释），产物只有 `muduo_base`、`muduo_net` 两个静态库。
 

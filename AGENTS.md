@@ -5,13 +5,13 @@
 ## 1. 现状
 
 - `forDsh/` —— **参考实现**，已完成并验证（muduo 逐字副本 + Gomoku + MySQL 战绩 + webbench 压测）。**冻结**。
-- `基于改进muduo高性能网络库的终端五子棋对弈CS模型/`（下称**自研目录**）—— 用户自己重写 muduo 的地方。
-  骨架、Gomoku、脚本、压测都已就位；**手写 muduo 进度 4/82**（见根 `README.md` 顶部的学习顺序）。
+- `forMe/`（旧名 `基于改进muduo高性能网络库的终端五子棋对弈CS模型/`）—— 用户自己重写 muduo 的地方。
+  骨架、Gomoku、脚本、压测都已就位；**手写 muduo 进度 12/82**（以根 `README.md` 顶部为准，实时用 `./scripts/progress.sh`）。
 - 两套实现共用同一个 MySQL 库 `gomoku`，性能可直接对照。
 
 ## 2. 目标
 
-1. **学 muduo**：跟着 `forDsh/muduo` 在自研目录里自己写一份等价实现（只有 `muduo/` 要写）。
+1. **学 muduo**：跟着 `forDsh/muduo` 在 `forMe/` 里自己写一份等价实现（只有 `muduo/` 要写）。
 2. **测自己的代码**：QPS、最大在线客户端数、客户端往返延迟。
 3. **改进并优化 muduo**：每轮优化后同口径复测，与优化前对比。
 
@@ -22,14 +22,14 @@
 | # | 规则 |
 |---|---|
 | **R1** | `forDsh/` 冻结：不改、不格式化、不"顺手优化"，`forDsh/muduo` 一个字都不动。 |
-| **R2** | 自研目录的 muduo **必须用户自己写**。AI 只做：讲原理、画调用链、给接口签名与伪代码、给测试思路、review 与纠错、诊断编译/运行错误。**不输出完整实现**（用户明确要求时例外），**更不许**把 `forDsh/muduo` 的文件复制或补全过来。 |
-| **R3** | 自研目录里非 muduo 的代码是"最小改动复制"：改协议、数据库、端口、脚本语义前先说清理由。 |
+| **R2** | `forMe/` 的 muduo **必须用户自己写**。AI 只做：讲原理、画调用链、给接口签名与伪代码、给测试思路、review 与纠错、诊断编译/运行错误。**不输出完整实现**（用户明确要求时例外），**更不许**把 `forDsh/muduo` 的文件复制或补全过来。 |
+| **R3** | `forMe/` 里非 muduo 的代码是"最小改动复制"：改协议、数据库、端口、脚本语义前先说清理由。 |
 | **R4** | 优化必须可回退：**一次只动一个假设**，先用同一命令复测基线，结果落盘可复现。 |
 | **R5** | 性能数字必须同口径（§9）；不同口径的数字不进同一张表。 |
 | **R6** | 保持代码风格：中文注释；muduo 的类名/文件名/头文件路径不变（否则 `Gomoku/` 的 `#include "muduo/net/TcpServer.h"` 会断）。 |
 | **R7** | 提交前跑验证三件套：`gomoku_board_test`（591 项）、`Gomoku/tests/e2e_test.py`（38 项）、客户端冒烟。 |
 | **R8** | 不改历史基准 `benchmarks/results/baseline-forDsh-*`；新结果另存。 |
-| **R9** | 不改 `/forDsh` 软链指向（`forDsh/scripts/setup_env.sh` 会抢它；自研目录的建 `/gomoku-self`）。 |
+| **R9** | 不改 `/forDsh` 软链指向（`forDsh/scripts/setup_env.sh` 会抢它；`forMe/` 建 `/gomoku-self`）。 |
 | **R10** | 编译失败先查三类高频原因：include 根不对、缺 `-DNO_ACCEPT4`、缺 `CHECK_PTHREAD_RETURN_VALUE` / `_FILE_OFFSET_BITS=64`。 |
 
 另外：**密码明文存储是需求**，别当 bug 修。
@@ -47,8 +47,10 @@
 │   ├── scripts/              setup_env / build / init_db / run_server / run_client
 │   ├── benchmarks/           webbench 矩阵、协议压测、规模与延迟压测 + results/
 │   └── tools/webbench/       内置 webbench 1.5（一处可移植性补丁）
-└── 自研目录/
-    ├── muduo/                要手写（base 42 + net 40）
+└── forMe/                    自研工区（旧名"基于改进muduo…CS模型/"）
+    ├── CMakeLists.txt         顶层工程：C++11/Release、产物布局、USE_REFERENCE_MUDUO 开关
+    ├── muduo/                 要手写（base 42 + net 40）
+    │   └── CMakeLists.txt     可单独 configure：只编 muduo 两个静态库（逐批验证用）
     ├── Gomoku/               原样复制
     ├── scripts/              + progress.sh
     ├── benchmarks/           + RESULTS.md（前后对比台账），run_webbench.sh 支持 TAG
@@ -62,8 +64,8 @@
 
 | 阶段 | 内容 | 验收 |
 |---|---|---|
-| A | `muduo/base`（42） | `cd muduo && cmake -S . -B build && cmake --build build` 全绿 |
-| B | `muduo/net`（40） | `cd .. && ./scripts/build.sh` 全绿，`gomoku_board_test` PASS |
+| A | `muduo/base`（42） | `cd forMe/muduo && cmake -S . -B build && cmake --build build` 全绿（`build` 是 `forMe/muduo/build`，只编两个静态库） |
+| B | `muduo/net`（40） | `cd forMe && ./scripts/build.sh` 全绿，`gomoku_board_test` PASS |
 | C | 跑通业务 + 量基线 | `python3 Gomoku/tests/e2e_test.py` → 38 checks 0 failures；三项指标写进 `benchmarks/RESULTS.md`（轮次 0 / self-base） |
 | D | 优化循环 | 选假设 → 改 → 同口径复测 → 填 RESULTS.md → 保留或回滚 |
 
@@ -101,14 +103,15 @@
 | 工具链 | g++ 11.4、CMake 3.22、Python 3、MySQL 8.0 |
 | 依赖 | build-essential、cmake、libboost-dev、libmysqlclient-dev、mysql-server、python3 |
 | 数据库 | 库 `gomoku`，账号 `gomoku / gomoku123`（两套共用；初始化 `cd forDsh && ./scripts/init_db.sh`） |
-| 软链 | `/forDsh` → 参考实现（不动）；`/gomoku-self` → 自研目录（可选） |
+| 软链 | `/forDsh` → 参考实现（不动）；`/gomoku-self` → `forMe/`（可选） |
 | 端口 | 参考实现 9527/8080；自研并行用 9627/8180；**A/B 时同端口先后跑，不并行** |
 
-## 8. 命令速查（在自研目录执行）
+## 8. 命令速查（在 `forMe/` 执行）
 
 ```bash
 # 编译
-./scripts/build.sh                                                    # -> build/（自己的 muduo）
+./scripts/build.sh                                                    # -> build/（整个工程，自己的 muduo）
+cmake -S muduo -B muduo/build && cmake --build muduo/build -j$(nproc)   # -> muduo/build/（只编 muduo，逐批验证用）
 cmake -S . -B build-ref -DUSE_REFERENCE_MUDUO=ON -DMUDUO_REF_DIR=/forDsh/muduo
 cmake --build build-ref -j$(nproc)                                    # -> build-ref/（参考 muduo）
 
@@ -140,7 +143,7 @@ python3 benchmarks/scale_test.py latency -c 50 -t 10 --payload chat --rooms 4 \
 **固定口径**：同一台机器、`--io-threads 4`、每档 10 秒、`ulimit -n 65535`、日志写 `/tmp`、
 压测期间不跑别的负载、A/B 同端口先后跑。
 
-参考实现实测（原始数据 `forDsh/benchmarks/results/`，已复制为 `自研目录/benchmarks/results/baseline-forDsh-*`）：
+参考实现实测（原始数据 `forDsh/benchmarks/results/`，已复制为 `forMe/benchmarks/results/baseline-forDsh-*`）：
 
 | 指标 | 结果 |
 |---|---|
@@ -155,7 +158,7 @@ HTTP QPS 平台化是单 IO 线程 + 每请求短连接的设计使然；延迟�
 
 ## 10. 验证状态
 
-自研目录用**参考 muduo** 复跑过（证明复制过来的业务代码与原版等价）：
+`forMe/` 用**参考 muduo** 复跑过（证明复制过来的业务代码与原版等价）：
 
 | 项目 | 结果 |
 |---|---|
@@ -186,7 +189,7 @@ HTTP QPS 平台化是单 IO 线程 + 每请求短连接的设计使然；延迟�
 **容易踩的坑**
 
 1. **空 muduo 时编译失败是预期**：`./scripts/build.sh` 停在 `muduo/net/Buffer.h: No such file`（或 `muduo/base/Logging.h`）。想先跑业务用 `-DUSE_REFERENCE_MUDUO=ON`。
-2. **`build/` 与 `build-ref/` 别混用**：基线/对照用 `build-ref/`，日常用自己的 `build/`（都被 `.gitignore` 忽略）。
+2. **三个构建目录别混用**：`forMe/build/`（整个工程，`./scripts/build.sh`）、`forMe/muduo/build/`（只编 muduo，逐批验证用）、`forMe/build-ref/`（链接参考 muduo 的对照）。三者都由 `.gitignore` 忽略，二进制不要互换。`build` 是相对路径，`cmake --build build` 必须在配置过它的那个目录里跑。
 3. **先广播 OVER 后写库**：查战绩要轮询，别收到 OVER 立刻断言。
 4. **e2e / 压测会写数据库**：`users`、`match_history` 会留下 `bench_`/`scale_` 账号。
 5. **webbench 三个坑**：URL 必须 `/` 结尾；用默认 HTTP/1.0（别加 `-2`）；`ulimit -n 65535`。
@@ -200,9 +203,9 @@ HTTP QPS 平台化是单 IO 线程 + 每请求短连接的设计使然；延迟�
 |---|---|
 | `README.md`（根） | 项目总览 + **学习顺序（含当前进度）** |
 | `AGENTS.md`（本文） | 规则、路线、口径、优化池、坑 |
-| `自研目录/README.md` | 自研工程与 forDsh 的差异、build-ref 对照构建 |
-| `自研目录/muduo/README.md` | 规模、增量编译、与参考实现的两处写法差异 |
-| `自研目录/benchmarks/RESULTS.md` | 优化前后对比台账（每轮一行） |
+| `forMe/README.md` | 自研工程与 forDsh 的差异、build-ref 对照构建 |
+| `forMe/muduo/README.md` | 规模、增量编译、与参考实现的两处写法差异 |
+| `forMe/benchmarks/RESULTS.md` | 优化前后对比台账（每轮一行） |
 | `forDsh/README.md` | 功能、架构、环境、DB、编译运行、客户端、协议、测试、FAQ |
 | `forDsh/muduo/README.md` | 副本来源、包含/排除、构建差异、调用链速查 |
 | `forDsh/Gomoku/README.md` | 组件职责、锁边界、状态机、胜负判定 |

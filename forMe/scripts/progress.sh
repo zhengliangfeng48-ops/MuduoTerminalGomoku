@@ -120,7 +120,10 @@ if [ -n "$EXTRA" ]; then
 fi
 
 if [ "$DONE" -eq "$REF_TOTAL" ]; then
-  echo "==> 82 个文件齐了。下一步：cmake --build build（或先跑 ./build/bin/gomoku_board_test）"
+  echo "==> 82 个文件齐了。下一步（在本目录 forMe/ 下）："
+  echo "      cd muduo && cmake --build build   # 只编 muduo（首次先 cmake -S . -B build）-> muduo/build/"
+  echo "      cd .. && ./scripts/build.sh       # 编整个工程 -> build/bin"
+  echo "      ./build/bin/gomoku_board_test     # 591 项，末行 PASS"
 else
   echo "==> 还没齐，先按 ./AGENTS.md 里的阶段顺序写；缺的文件就是上面那份清单。"
 fi
