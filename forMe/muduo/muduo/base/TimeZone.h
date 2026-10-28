@@ -10,7 +10,7 @@ namespace muduo{
 
 //未指定时区的当地时间
 //一分钟总是60秒，没有闰秒
-struct DateTime(){
+struct DateTime{
     DateTime(){}
     explicit DateTime(const struct tm&);
     DateTime(int _year, int _month, int _day, int _hour, int _minute, int _second)

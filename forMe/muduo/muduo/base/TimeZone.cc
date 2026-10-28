@@ -44,7 +44,7 @@ struct TimeZone::Data{
 
     void addTransition(int64_t utcTime, int localtimeIdx){
         LocalTime lt = localtimes.at(localtimeIdx);
-        transisions.push_back(Transition(utcTime,utcTime + lt.utcOffset, localtimeIdx));
+        transitions.push_back(Transition(utcTime,utcTime + lt.utcOffset, localtimeIdx));
     }
 
     const LocalTime* findLocalTime(int64_t utcTime) const;
@@ -70,7 +70,7 @@ struct TimeZone::Data{
 
 namespace muduo{
 
-const int kSecondsPerday = 24*60*60;
+const int kSecondsPerDay = 24*60*60;
 
 namespace detail{
 

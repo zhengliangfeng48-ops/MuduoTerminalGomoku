@@ -4,6 +4,8 @@
 #include "muduo/base/copyable.h"
 #include "muduo/base/Types.h"
 
+#include<boost/operators.hpp>
+
 struct tm;
 
 namespace muduo{
@@ -31,7 +33,7 @@ public:
     Date(int year,int month,int day);
 
     // Constucts a Date from Julian Day Number.
-    explicit Date(int julianDayNum):julianDayNum_(julianDayNum){}
+    explicit Date(int julianDayNum):julianDayNumber_(julianDayNum){}
 
     // Constucts a Date from struct tm
     explicit Date(const struct tm&);
@@ -66,13 +68,13 @@ public:
         return (julianDayNumber_+1) % kDaysPerWeek;
     }
 
-    int julianDayNumber() const ( return julianDayNumber_; )
+    int julianDayNumber() const { return julianDayNumber_; }
 
 private:
     int julianDayNumber_;
 };
 
-inline bool operatoe<(Date x,Date y){
+inline bool operator<(Date x,Date y){
     return x.julianDayNumber() < y.julianDayNumber();
 }
 
