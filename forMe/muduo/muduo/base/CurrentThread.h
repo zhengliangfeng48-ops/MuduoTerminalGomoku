@@ -22,7 +22,7 @@ namespace CurrentThread{
         if(__builtin_expect(t_cachedTid == 0, 0)){
             cacheTid();
         }
-        return t_chchedTid;
+        return t_cachedTid;
     }
 
     inline const char* tidString(){ // for logging
