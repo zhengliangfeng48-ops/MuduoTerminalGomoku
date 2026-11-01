@@ -37,7 +37,7 @@ public:
 private:
     MutexLock& mutex_;
     pthread_cond_t pcond_;
-}
+};
 
 }   // namespace muduo
 

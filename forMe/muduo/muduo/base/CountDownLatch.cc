@@ -4,7 +4,7 @@ using namespace muduo;
 
 CountDownLatch::CountDownLatch(int count)
     : mutex_(),     // MutexLock 类的默认无参构造函数初始化 mutex_
-      condition_(mutex),
+      condition_(mutex_),
       count_(count){}
 
 void CountDownLatch::wait(){
