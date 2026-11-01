@@ -173,6 +173,7 @@ public:
 private:
     friend class Condition;
 
+    // 此类只供 class Condition 使用
     class UnassignGuard : noncopyable{
     public:
         explicit UnassignGuard(MutexLock& owner)
