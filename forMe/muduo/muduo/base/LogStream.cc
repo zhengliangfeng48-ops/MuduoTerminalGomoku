@@ -200,13 +200,22 @@ const char* FixedBuffer<SIZE>::debugString(){
     return data_;
 }
 
+/*
+它们永远不会被执行，存在的意义只是提供两个地址。
+构造时把 cookieStart 的地址存进成员 cookie_，
+析构时换成 cookieEnd。这是给 GDB 看的一种“调试标记”，
+空实现是故意的
+*/
 template<int SIZE>
 void FixedBuffer<SIZE>::cookieStart(){}
 
 template<int SIZE>
 void FixedBuffer<SIZE>::cookieEnd(){}
 
+// 从不调用
 void LogStream::staticCheck(){
+    // numeric_limits<T>::digits10 是类型 T 能无损打印的十进制有效位数
+    // 预留10字节给负号、单位、'\0'等字符
     static_assert(kMaxNumericSize - 10 > std::numeric_limits<double>::digits10,
                     "kMaxNumericSize is large enough");
     static_assert(kMaxNumericSize - 10 > std::numeric_limits<long double>::digits10,
@@ -225,6 +234,68 @@ void LogStream::formatInteger(T v){
     }
 }
 
+LogStream& LogStream::operator<<(short v){
+    *this << static_cast<int>(v);
+    return *this;
+}
+
+LogStream& LogStream::operator<<(unsigned short v){
+    *this << static_cast<unsigned int>(v);
+    return *this;
+}
+
+LogStream& LogStream::operator<<(int v){
+    formatInteger(v);
+    return *this;
+}
+
+LogStream& LogStream::operator<<(unsigned int v){
+    formatInteger(v);
+    return *this;
+}
+
+LogStream& LogStream::operator<<(long v){
+    formatInteger(v);
+    return *this;
+}
+
+LogStream& LogStream::operator<<(unsigned long v){
+    formatInteger(v);
+    return *this;
+}
+
+LogStream& LogStream::operator<<(long long v){
+    formatInteger(v);
+    return *this;
+}
+
+LogStream& LogStream::operator<<(unsigned long long v){
+    formatInteger(v);
+    return *this;
+}
+
+LogStream& LogStream::operator<<(const void* p){
+    uintptr_t v = reinterpret_cast<uintptr_t>(p);
+    if (buffer_.avail() >= kMaxNumericSize){
+        char* buf = buffer_.current();
+        buf[0] = '0';
+        buf[1] = 'x';
+        size_t len = convertHex(buf+2, v);
+        buffer_.add(len+2);
+    }
+    return *this;
+}
+
+// FIXME: replace this with Grisu3 by Florian Loitsch.
+LogStream& LogStream::operator<<(double v){
+    if (buffer_.avail() >= kMaxNumericSize){
+        // 12位有效数字
+        int len = snprintf(buffer_.current(), kMaxNumericSize, "%.12g", v);
+        buffer_.add(len);
+    }
+    return *this;
+}
+
 template<typename T>
 Fmt::Fmt(const char* fmt, T val){
     // 断言T是算术类型（整型或浮点型）
@@ -235,7 +306,10 @@ Fmt::Fmt(const char* fmt, T val){
 }
 
 // Explicit instantiations
-
+/*
+显式实例化,指在代码中明确地告诉编译器为特定的模板参数生成模板的实例
+（即具体的类或函数代码），而不是等待编译器在首次使用时隐式生成。
+*/
 template Fmt::Fmt(const char* fmt, char);
 
 template Fmt::Fmt(const char* fmt, short);
@@ -249,19 +323,3 @@ template Fmt::Fmt(const char* fmt, unsigned long long);
 
 template Fmt::Fmt(const char* fmt, float);
 template Fmt::Fmt(const char* fmt, double);
-
-/*      todoList:
-
-self& operator<<(short);
-self& operator<<(unsigned short);
-self& operator<<(int);
-self& operator<<(unsigned int);
-self& operator<<(long);
-self& operator<<(unsigned long);
-self& operator<<(long long);
-self& operator<<(unsigned long long);
-
-self& operator<<(const void*);
-
-self& operator<<(double);
-*/
