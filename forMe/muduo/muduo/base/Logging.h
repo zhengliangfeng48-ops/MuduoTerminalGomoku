@@ -125,6 +125,7 @@ const char* strerror_tl(int savedErrno);
 
 // Taken from glog/logging.h
 // 检查输入是否为非空。这在构造函数初始化列表中非常有用。
+// "#"为预处理阶段把宏参数 val 原样文本化成字符串字面量(源代码变量名文本)
 #define CHECK_NOTNULL(val) \
     ::muduo::CheckNotNull(__FILE__, __LINE__, "'" #val "' Must be non NULL", (val))
 
