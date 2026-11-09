@@ -82,7 +82,7 @@ private:
         LogLevel level_;
         int line_;
         SourceFile basename_;
-    }
+    };
 
     Impl impl_;
 };
