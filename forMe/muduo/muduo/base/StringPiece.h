@@ -110,7 +110,7 @@ public:
 #define STRINGPIECE_BINARY_PREDICATE(cmp,auxcmp)                        \
     bool operator cmp (const StringPiece& x) const{                     \
         int r=memcmp(ptr_,x.ptr_,length_<x.length_?length_:x.length_);  \
-        return ((r auxcmp 0)||((r==0)&&(length_ cmp x.length)));        \
+        return ((r auxcmp 0)||((r==0)&&(length_ cmp x.length_)));        \
     }
     STRINGPIECE_BINARY_PREDICATE(<,  <);
     STRINGPIECE_BINARY_PREDICATE(<=, <);
@@ -120,7 +120,7 @@ public:
 #undef STRINGPIECE_BINARY_PREDICATE
 
     int compare(const StringPiece& x) const{
-        int r=memcmp(ptr_,x.ptr,length_<x.length_?length_:x.length_);
+        int r=memcmp(ptr_,x.ptr_,length_<x.length_?length_:x.length_);
         //只比较大小，不计算差距
         if(r==0){
             if(length_<x.length_) r=-1;
@@ -139,7 +139,7 @@ public:
 
     //判断 this 是否以 x 为开头
     bool starts_with(const StringPiece& x) const{
-        return ((length_>=x.length_)&&(memcmp(ptr_,x.ptr,x.length_)==0));
+        return ((length_>=x.length_)&&(memcmp(ptr_,x.ptr_,x.length_)==0));
     }
 };
 
@@ -164,6 +164,6 @@ template<> struct __type_traits<muduo::StringPiece> {
 
 // allow StringPiece to be logged
 std::ostream& operator<<(std::ostream& o, const muduo::StringPiece& piece);
-//zlf: 实际上此函数在muduo中从未实现
+// 实际上此函数在muduo中从未实现
 
 #endif  //MUDUO_BASE_STRINGPIECE_H
