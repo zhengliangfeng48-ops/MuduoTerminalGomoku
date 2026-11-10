@@ -51,3 +51,30 @@ python3 Gomoku/tests/e2e_test.py          # 38 checks, 0 failures
 ```
 
 通过后进入性能基线与优化，见 [../benchmarks/RESULTS.md](../benchmarks/RESULTS.md)。
+
+## 日志功能测试（testMuduo.cc）
+`testMuduo.cc` 用于验证 muduo_base 库的日志打印功能，覆盖以下场景：
+- 各级别日志输出与过滤（TRACE/DEBUG/INFO/WARN/ERROR）
+- 动态调整日志级别（`setLogLevel`）
+- 流式输出多种数据类型（int / double / C 字符串 / std::string）
+- `CHECK_NOTNULL` 宏
+
+> **注意**：当前 `CurrentThread.cc` 尚未实现 `cacheTid()`，testMuduo.cc 中包含临时 stub。
+> 待库补全后可移除该 stub 及 `#include "muduo/base/CurrentThread.h"`。
+
+### 编译
+```bash
+g++ -std=c++11 -g -Wall -Wextra -Wno-unused-parameter \
+    -I. -DCHECK_PTHREAD_RETURN_VALUE -D_FILE_OFFSET_BITS=64 \
+    testMuduo.cc build/muduo/base/libmuduo_base.a \
+    -lpthread -lrt -o testMuduo
+```
+参数说明：
+- `-I.`：当前目录为 include 根，使 `#include "muduo/base/Logging.h"` 生效
+- `build/muduo/base/libmuduo_base.a`：单独构建的 muduo_base 静态库
+- `-lpthread -lrt`：muduo base 依赖的线程库与 POSIX 实时扩展库
+
+### 运行
+```bash
+./testMuduo
+```
