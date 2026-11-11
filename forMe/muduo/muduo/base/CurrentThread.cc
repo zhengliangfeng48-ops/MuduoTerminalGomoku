@@ -1,4 +1,4 @@
-// .h 中声明但未定义：
+// .h 中声明但未定义：// 在 Thread.cc 中定义
 // void cacheTid();
 // bool isMainThread();
 // void sleepUsec(int64_t usec);  // for testing
