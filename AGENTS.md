@@ -6,7 +6,7 @@
 
 - `forDsh/` —— **参考实现**，已完成并验证（muduo 逐字副本 + Gomoku + MySQL 战绩 + webbench 压测）。**冻结**。
 - `forMe/`（旧名 `基于改进muduo高性能网络库的终端五子棋对弈CS模型/`）—— 用户自己重写 muduo 的地方。
-  骨架、Gomoku、脚本、压测都已就位；**手写 muduo 进度 12/82**（以根 `README.md` 顶部为准，实时用 `./scripts/progress.sh`）。
+  骨架、Gomoku、脚本、压测都已就位；**手写 muduo 进度 25/82**（以根 `README.md` 顶部为准，实时用 `./scripts/progress.sh`）。
 - 两套实现共用同一个 MySQL 库 `gomoku`，性能可直接对照。
 
 ## 2. 目标

@@ -152,7 +152,7 @@ void Thread::start(){
     detail::ThreadData* data = new detail::ThreadData(func_, name_, &tid_, &latch_);
     if (pthread_create(&pthreadId_, NULL, &detail::startThread, data)){
         started_ = false;
-        delete data; // or no delete?
+        delete data; // or no delete? 必须自行 delete，已经没有子线程 startThread 来 delete 了
         LOG_SYSFATAL << "Failed in pthread_create";
     }else{
         latch_.wait();

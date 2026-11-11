@@ -17,16 +17,20 @@ Reactor 网络库，客户端是同仓库的终端程序；账号与战绩（场
 2. 批 2（5–12）：StringPiece.h、Atomic.h、Timestamp.h、Timestamp.cc、Date.h、Date.cc、TimeZone.h、TimeZone.cc
 3. 批 3（13–19）：CurrentThread.h、CurrentThread.cc、Mutex.h、Condition.h、Condition.cc、CountDownLatch.h、CountDownLatch.cc
 4. 批 4（20–23）：LogStream.h、LogStream.cc、Logging.h、Logging.cc
-5. 批 5（24–27）：Thread.h、Thread.cc、Exception.h、Exception.cc
+5. 批 5（24–27）：Exception.h、Exception.cc、Thread.h、Thread.cc
 6. 批 6（28–37）：FileUtil.h、FileUtil.cc、ProcessInfo.h、ProcessInfo.cc、LogFile.h、LogFile.cc、BlockingQueue.h、BoundedBlockingQueue.h、ThreadPool.h、ThreadPool.cc
 7. 批 7（38–42）：AsyncLogging.h、AsyncLogging.cc、ThreadLocal.h、ThreadLocalSingleton.h、Singleton.h
 8. 批 8（43–47）：Endian.h、Callbacks.h、TimerId.h、SocketsOps.h、SocketsOps.cc
 9. 批 9（48–51）：InetAddress.h、InetAddress.cc、Socket.h、Socket.cc
 10. 批 10（52–53）：Buffer.h、Buffer.cc
-11. 批 11（54–64）：Channel.h、Channel.cc、Poller.h、Poller.cc、poller/EPollPoller.h、poller/EPollPoller.cc、poller/PollPoller.h、poller/PollPoller.cc、poller/DefaultPoller.cc、EventLoop.h、EventLoop.cc
-12. 批 12（65–68）：Timer.h、Timer.cc、TimerQueue.h、TimerQueue.cc
+11. 批 11（54–63）：Channel.h、EventLoop.h、Channel.cc、Poller.h、Poller.cc、poller/EPollPoller.h、poller/EPollPoller.cc、poller/PollPoller.h、poller/PollPoller.cc、poller/DefaultPoller.cc
+12. 批 12（64–68）：Timer.h、Timer.cc、TimerQueue.h、TimerQueue.cc、EventLoop.cc
 13. 批 13（69–74）：EventLoopThread.h、EventLoopThread.cc、EventLoopThreadPool.h、EventLoopThreadPool.cc、Acceptor.h、Acceptor.cc
 14. 批 14（75–82）：TcpConnection.h、TcpConnection.cc、TcpServer.h、TcpServer.cc、Connector.h、Connector.cc、TcpClient.h、TcpClient.cc
+
+同一批内按 include 依赖排序：**被包含的文件在前**。所以 Exception 在 Thread 之前（`Thread.cc` include 了 `Exception.h`），
+`EventLoop.h` 在 `Poller.h` 之前（`Poller.h` include 了 `EventLoop.h`），
+`EventLoop.cc` 排在批 12 最后（它 include 了 `Poller.h` 与 `TimerQueue.h`，是整条链的收口）。
 
 **逐批验证**：`build` 是相对路径，必须在"配置过它的那个目录"里执行 —— 也就是 `forMe/muduo/`。
 批 1 配置一次，之后每批写完只编译这一个目录里的 muduo（只编 `muduo_base` / `muduo_net` 两个静态库）：
@@ -45,7 +49,7 @@ cmake --build build -j$(nproc)   # 以后每批写完跑这一条
 | 部分 | 状态 |
 |---|---|
 | [`forDsh/`](forDsh/README.md) | ✅ 参考实现：单测 591 项、e2e 38 项、webbench 6 档 0 失败、2 万在线 |
-| [forMe/](forMe/README.md) | 🚧 muduo 手写 12/82；Gomoku、脚本、压测已复制 |
+| [forMe/](forMe/README.md) | 🚧 muduo 手写 25/82；Gomoku、脚本、压测已复制 |
 
 两套实现共用同一个 MySQL 库（`gomoku`），性能可直接对照。
 
