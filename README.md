@@ -9,7 +9,7 @@ Reactor 网络库，客户端是同仓库的终端程序；账号与战绩（场
 
 ## 学习顺序
 
-**当前进度 28/82**
+**当前进度 29/82**
 
 > 路径相对 `forDsh/muduo/muduo/`；`forMe/muduo/muduo/` 下的同名路径就是你要写的文件。
 
@@ -49,7 +49,7 @@ cmake --build build -j$(nproc)   # 以后每批写完跑这一条
 | 部分 | 状态 |
 |---|---|
 | [`forDsh/`](forDsh/README.md) | ✅ 参考实现：单测 591 项、e2e 38 项、webbench 6 档 0 失败、2 万在线 |
-| [forMe/](forMe/README.md) | 🚧 muduo 手写 25/82；Gomoku、脚本、压测已复制 |
+| [forMe/](forMe/README.md) | 🚧 muduo 手写 29/82；Gomoku、脚本、压测已复制 |
 
 两套实现共用同一个 MySQL 库（`gomoku`），性能可直接对照。
 
