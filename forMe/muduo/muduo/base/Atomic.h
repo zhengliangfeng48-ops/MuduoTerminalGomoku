@@ -26,7 +26,7 @@ public:
 
     T get(){
         //纯粹的原子加载函数，直接返回value的值
-        return _atomic_load_n(&value_,__ATOMIC_SEQ_CST);
+        return __atomic_load_n(&value_,__ATOMIC_SEQ_CST);
     }
 
     T getAndAdd(T x){
@@ -70,7 +70,7 @@ private:
 }   //namespace detail
 
 typedef detail::AtomicIntegerT<int32_t> AtomicInt32;
-typedef detail::AtomicIntegetT<int64_t> AtomicInt64;
+typedef detail::AtomicIntegerT<int64_t> AtomicInt64;
 
 }   //namespace muduo
 
